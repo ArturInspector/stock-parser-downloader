@@ -1,89 +1,56 @@
-За монтажом обнаружил сильную необходимость в одномоментном скачивании большого кол-во видео, а поскольку видео пока найдешь, пока скачаешь.
-В общем, скрипт упростил процесс мне и я думаю Вам упростит. Сделано при помощи Claude 3.5, Антропик спасибо.
+# Stock Video Downloader Pro
 
-## Основные возможности
-- Поиск видео на Pexels и Pixabay
-- AI-ассистент для улучшения поисковых запросов
-- Одновременное скачивание нескольких видео
+A professional tool for searching and downloading stock videos from Pexels and Pixabay, featuring an AI assistant for generating search prompts.
 
-От вас требуется лишь ввести API, ниже ссылки где вы можете получить API каждого из стоков:
+![Stock Downloader](https://img.shields.io/badge/Status-Active-success)
+![Python](https://img.shields.io/badge/Python-3.8+-blue)
+![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green)
 
-### Pexels
-1. Перейдите на [Pexels API](https://www.pexels.com/api/)
-2. Зарегистрируйтесь или войдите в аккаунт
-3. Получите API ключ в разделе "Your API Key"
+## Features
 
-### Pixabay
-1. Посетите [Pixabay API](https://pixabay.com/api/docs/)
-2. Создайте аккаунт
-3. Получите API ключ в настройках профиля
+- 🎥 **Multi-Source Search**: Search videos on Pexels and Pixabay simultaneously.
+- 🤖 **AI Assistant**: Integrated Google Gemini AI to generate professional search prompts from your scenario descriptions.
+- ⬇️ **Batch Download**: Download multiple videos at once with progress tracking.
+- 🎨 **Modern UI**: Sleek, dark-themed interface for a professional experience.
+- ⚙️ **Easy Configuration**: Simple settings panel to manage your API keys.
 
-### Google Gemini
-1. Перейдите на [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Войдите с помощью Google аккаунта
-3. Создайте API ключ в разделе "API keys"
+## Installation
 
-#Инструкция по установке и настройке:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/stock-parser-downloader.git
+   cd stock-parser-downloader
+   ```
 
-1. Скачайте репозиторий:
-   - Через Git: выполните команду `git clone` в терминале
-   - Или скачайте ZIP-архив и распакуйте его
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-2. Установите Python 3.8 или выше, если еще не установлен
-   
-3. Откройте терминал в папке проекта и установите зависимости:
-   ```pip install -r requirements.txt```
+3. Run the application:
+   ```bash
+   python main.py
+   ```
 
-4. Запустите программу:
-   ```python main.py```
+## Configuration
 
+You will need API keys for the services you want to use:
 
-Версия 0.1, будет дорабатываться и да, код писала нейронка, закидайте меня арбузами, но если он работает - меня это устраивает. 
-За доработками и идеями приглашаю в обсуждение.
+- **Pexels**: [Get API Key](https://www.pexels.com/api/)
+- **Pixabay**: [Get API Key](https://pixabay.com/api/docs/)
+- **Google Gemini**: [Get API Key](https://makersuite.google.com/app/apikey)
 
+Enter these keys in the **Settings** tab of the application.
 
+## Architecture
 
-# English Version
+The project follows a modular SOLID architecture:
 
-During video editing, I discovered a strong need for downloading multiple videos simultaneously. Since finding and downloading videos one by one can be time-consuming, I created this script to simplify the process. Made with Claude 3.5, thanks to Anthropic.
+- `src/models`: Data models
+- `src/services`: Business logic and API clients
+- `src/ui`: User interface components
+- `src/utils`: Helper utilities
 
-## Key Features
-- Video search on Pexels and Pixabay
-- AI assistant for improving search queries
-- Simultaneous download of multiple videos
+## Credits
 
-All you need to do is enter the API keys. Below are links where you can get API keys for each stock service:
-
-## Getting API Keys
-
-### Pexels
-1. Go to [Pexels API](https://www.pexels.com/api/)
-2. Register or log in to your account
-3. Get your API key in the "Your API Key" section
-
-### Pixabay
-1. Visit [Pixabay API](https://pixabay.com/api/docs/)
-2. Create an account
-3. Get your API key in profile settings
-
-### Google Gemini
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
-3. Create an API key in the "API keys" section
-
-#Installation and Setup Instructions:
-
-1. Download the repository:
-   - Using Git: run `git clone` command in terminal
-   - Or download ZIP archive and extract it
-
-2. Install Python 3.8 or higher if not already installed
-   
-3. Open terminal in project folder and install dependencies:
-   ```pip install -r requirements.txt```
-
-4. Run the program:
-   ```python main.py```
-
-Version 0.1, will be improved and yes, the code was written by AI, throw watermelons at me, but if it works - I'm fine with that.
-Feel free to join the discussion for improvements and ideas.
+Original concept by the user.
