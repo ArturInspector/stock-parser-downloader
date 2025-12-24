@@ -1,5 +1,4 @@
 import sys
-#Создано при помощи Claude 3.5 sonnet.
 from PyQt6.QtWidgets import QApplication
 from src.ui.main_window import MainWindow
 

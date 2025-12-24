@@ -53,4 +53,5 @@ The project follows a modular SOLID architecture:
 
 ## Credits
 
+Refactored and modernized by Antigravity (Google DeepMind).
 Original concept by the user.

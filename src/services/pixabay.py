@@ -2,6 +2,7 @@ import requests
 import random
 from typing import List, Dict, Any
 from .api_client import VideoService
+from ..utils.logger import logger
 
 class PixabayService(VideoService):
     def __init__(self, api_key: str):
@@ -10,7 +11,8 @@ class PixabayService(VideoService):
 
     def search_videos(self, query: str, count: int) -> List[Dict[str, Any]]:
         if not self.api_key:
-            raise ValueError("Pixabay API key is missing")
+            logger.debug("Pixabay: Missing API key")
+            return []
 
         params = {
             'key': self.api_key,
@@ -38,6 +40,36 @@ class PixabayService(VideoService):
         hits = data.get('hits', [])
         random.shuffle(hits)
         return hits[:count]
+
+    def search_photos(self, query: str, count: int) -> List[Dict[str, Any]]:
+        if not self.api_key:
+            return []
+
+        params = {
+            'key': self.api_key,
+            'q': query,
+            'per_page': count,
+            'image_type': 'photo',
+            'safesearch': 'true'
+        }
+        
+        # Base url for photos is https://pixabay.com/api/
+        response = requests.get("https://pixabay.com/api/", params=params)
+        response.raise_for_status()
+        data = response.json()
+        
+        hits = data.get('hits', [])
+        results = []
+        for h in hits:
+            results.append({
+                'id': h['id'],
+                'url': h['largeImageURL'],
+                'preview': h['webformatURL'],
+                'width': h['imageWidth'],
+                'height': h['imageHeight'],
+                'source': 'Pixabay'
+            })
+        return results
 
     def get_video_url(self, video_data: Dict[str, Any]) -> str:
         # Pixabay structure is different

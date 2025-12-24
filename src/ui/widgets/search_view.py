@@ -1,12 +1,19 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
                             QPushButton, QComboBox, QSpinBox, QProgressBar, 
-                            QTextEdit, QListWidget, QFileDialog, QMessageBox, QFrame)
+                            QTextEdit, QFileDialog, QMessageBox, QFrame, QScrollArea)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from pathlib import Path
 from ...services.pexels import PexelsService
 from ...services.pixabay import PixabayService
+from ...services.mixkit_scraper import MixkitScraper
+from ...services.coverr_scraper import CoverrScraper
+from ...services.videezy_scraper import VideezyScraper
+from ...services.mazwai_scraper import MazwaiScraper
 from ...services.gemini import GeminiService
 from ...services.downloader import Downloader
+from ...utils.logger import logger
+from ...utils.persistence import persistence
+from .tilt_card import TiltCard
 
 class SearchWorker(QThread):
     finished = pyqtSignal(list)
@@ -20,27 +27,64 @@ class SearchWorker(QThread):
         self.config = config
 
     def run(self):
+        logger.info(f"SearchWorker started: type={self.service_type}, query='{self.query}'")
         try:
             results = []
-            if self.service_type in ['Pexels', 'Both']:
-                pexels = PexelsService(self.config.pexels_api_key)
-                videos = pexels.search_videos(self.query, self.count)
-                for v in videos:
-                    v['source'] = 'Pexels'
-                    v['download_url'] = pexels.get_video_url(v)
-                results.extend(videos)
-
-            if self.service_type in ['Pixabay', 'Both']:
-                pixabay = PixabayService(self.config.pixabay_api_key)
-                videos = pixabay.search_videos(self.query, self.count)
-                for v in videos:
-                    v['source'] = 'Pixabay'
-                    v['download_url'] = pixabay.get_video_url(v)
-                results.extend(videos)
             
+            # Mixkit (Public)
+            if self.service_type in ['Mixkit', 'Public Only', 'All Sources']:
+                mixkit = MixkitScraper()
+                results.extend(mixkit.search_videos(self.query, self.count))
+                
+            # Coverr (Public)
+            if self.service_type in ['Coverr', 'Public Only', 'All Sources']:
+                coverr = CoverrScraper()
+                results.extend(coverr.search_videos(self.query, self.count))
+
+            # Videezy (Public)
+            if self.service_type in ['Videezy', 'Public Only', 'All Sources']:
+                videezy = VideezyScraper()
+                results.extend(videezy.search_videos(self.query, self.count))
+
+            # Mazwai (Public)
+            if self.service_type in ['Mazwai', 'Public Only', 'All Sources']:
+                mazwai = MazwaiScraper()
+                results.extend(mazwai.search_videos(self.query, self.count))
+
+            # Pexels (Key required)
+            if self.service_type in ['Pexels', 'All Sources']:
+                if self.config.pexels_api_key:
+                    logger.debug("Pexels search enabled with key")
+                    pexels = PexelsService(self.config.pexels_api_key)
+                    videos = pexels.search_videos(self.query, self.count)
+                    for v in videos:
+                        v['source'] = 'Pexels'
+                        v['download_url'] = pexels.get_video_url(v)
+                    results.extend(videos)
+                else:
+                    logger.debug("Pexels skipped: No API Key")
+
+            # Pixabay (Key required)
+            if self.service_type in ['Pixabay', 'All Sources']:
+                if self.config.pixabay_api_key:
+                    logger.debug("Pixabay search enabled with key")
+                    pixabay = PixabayService(self.config.pixabay_api_key)
+                    videos = pixabay.search_videos(self.query, self.count)
+                    for v in videos:
+                        v['source'] = 'Pixabay'
+                        v['download_url'] = pixabay.get_video_url(v)
+                    results.extend(videos)
+                else:
+                    logger.debug("Pixabay skipped: No API Key")
+            
+            # Record in history
+            persistence.add_history(self.query, self.service_type, len(results))
+            
+            logger.info(f"SearchWorker finished: {len(results)} total results found")
             self.finished.emit(results)
         except Exception as e:
-            self.error.emit(str(e))
+            logger.error(f"SearchWorker runtime crash: {e}", exc_info=True)
+            self.error.emit(f"Critical search error: {str(e)}")
 
 class DownloadWorker(QThread):
     progress = pyqtSignal(str)
@@ -56,10 +100,14 @@ class DownloadWorker(QThread):
         count = 0
         total = len(self.videos)
         
+        import re
         for i, video in enumerate(self.videos, 1):
             self.progress.emit(f"Downloading {i}/{total}...")
-            filename = f"{video['source'].lower()}_{video['id']}.mp4"
+            # Sanitize filename
+            safe_id = re.sub(r'[^\w\-_.]', '_', str(video['id']).split('?')[0])
+            filename = f"{video['source'].lower()}_{safe_id}.mp4"
             if self.downloader.download_video(video['download_url'], filename):
+                persistence.add_download(filename, video['source'], str(self.save_path / filename))
                 count += 1
                 
         self.finished.emit(count)
@@ -84,7 +132,7 @@ class SearchViewWidget(QWidget):
         header.setObjectName("Header")
         
         desc = QLabel("Find and download high-quality stock footage.")
-        desc.setStyleSheet("color: #a1a1aa; font-size: 14px;")
+        desc.setStyleSheet("color: #71717a; font-size: 14px;")
         
         header_layout.addWidget(header)
         header_layout.addWidget(desc)
@@ -106,8 +154,8 @@ class SearchViewWidget(QWidget):
         self.query_input.setMinimumHeight(48)
         
         self.service_combo = QComboBox()
-        self.service_combo.addItems(['Pexels', 'Pixabay', 'Both'])
-        self.service_combo.setFixedWidth(140)
+        self.service_combo.addItems(['Public Only', 'All Sources', 'Mixkit', 'Coverr', 'Videezy', 'Mazwai', 'Pexels', 'Pixabay'])
+        self.service_combo.setCurrentText('Public Only')
         self.service_combo.setMinimumHeight(48)
         self.service_combo.setCursor(Qt.CursorShape.PointingHandCursor)
         
@@ -127,13 +175,13 @@ class SearchViewWidget(QWidget):
         # Row 2: AI Assistant
         ai_frame = QFrame()
         ai_frame.setObjectName("Card")
-        ai_frame.setStyleSheet("background-color: #18181b; border: 1px dashed #3f3f46;")
+        ai_frame.setStyleSheet("background-color: #09090b; border: 1px dashed #27272a;")
         ai_layout = QVBoxLayout(ai_frame)
         ai_layout.setContentsMargins(20, 20, 20, 20)
         
         ai_header = QHBoxLayout()
         ai_label = QLabel("AI Assistant")
-        ai_label.setStyleSheet("font-weight: 600; color: #e4e4e7;")
+        ai_label.setStyleSheet("font-weight: 600; color: #fafafa;")
         ai_header.addWidget(ai_label)
         ai_header.addStretch()
         
@@ -160,8 +208,20 @@ class SearchViewWidget(QWidget):
         results_label.setObjectName("SubHeader")
         layout.addWidget(results_label)
 
-        self.results_list = QListWidget()
-        layout.addWidget(self.results_list)
+        # Scrollable area for cards
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("background: transparent; border: none;")
+        
+        self.results_container = QWidget()
+        self.results_container.setStyleSheet("background: transparent;")
+        self.results_layout = QHBoxLayout(self.results_container)
+        self.results_layout.setContentsMargins(0, 0, 0, 0)
+        self.results_layout.setSpacing(20)
+        self.results_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        
+        self.scroll_area.setWidget(self.results_container)
+        layout.addWidget(self.scroll_area)
 
         # Bottom Controls
         bottom_layout = QHBoxLayout()
@@ -182,7 +242,7 @@ class SearchViewWidget(QWidget):
         self.search_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.search_btn.clicked.connect(self.start_search)
         
-        self.download_btn = QPushButton("Download Selected")
+        self.download_btn = QPushButton("Download All")
         self.download_btn.setEnabled(False)
         self.download_btn.setMinimumHeight(48)
         self.download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -208,8 +268,6 @@ class SearchViewWidget(QWidget):
             gemini = GeminiService(self.config.gemini_api_key)
             prompts = gemini.generate_prompts(scenario)
             
-            # Show prompts in a dialog or menu
-            # For now, just set the first one
             if prompts:
                 self.query_input.setText(prompts[0])
                 QMessageBox.information(self, "AI Assistant", 
@@ -223,7 +281,12 @@ class SearchViewWidget(QWidget):
             return
             
         self.search_btn.setEnabled(False)
-        self.results_list.clear()
+        # Clear results
+        while self.results_layout.count():
+            item = self.results_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        
         self.found_videos = []
         
         self.worker = SearchWorker(
@@ -243,8 +306,11 @@ class SearchViewWidget(QWidget):
         for video in results:
             duration = video.get('duration', '?')
             quality = f"{video.get('width', 0)}x{video.get('height', 0)}"
-            item = f"[{video['source']}] Video ID: {video['id']} | {quality} | {duration}s"
-            self.results_list.addItem(item)
+            title = f"Video {video['id']}"
+            subtitle = f"{video['source']} | {quality} | {duration}s"
+            
+            card = TiltCard(title, subtitle, video.get('preview'))
+            self.results_layout.addWidget(card)
             
         if results:
             self.download_btn.setEnabled(True)
