@@ -6,13 +6,27 @@ A professional tool for searching and downloading stock videos from Pexels and P
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-green)
 
+## 📸 Showcase
+
+<p align="center">
+  <img src="screen1.png" width="800" alt="Search Interface">
+  <br>
+  <i>Modern search interface with AI Assistant and Public Sources</i>
+</p>
+
+<p align="center">
+  <img src="screen2.png" width="800" alt="UI Design">
+  <br>
+  <i>Dynamic 3D Tilt Cards with Previews and Dark Cyber Theme</i>
+</p>
+
 ## Features
 
 - 🎥 **Multi-Source Search**: Search videos on Pexels and Pixabay simultaneously.
-- 🤖 **AI Assistant**: Integrated Google Gemini AI to generate professional search prompts from your scenario descriptions.
-- ⬇️ **Batch Download**: Download multiple videos at once with progress tracking.
-- 🎨 **Modern UI**: Sleek, dark-themed interface for a professional experience.
-- ⚙️ **Easy Configuration**: Simple settings panel to manage your API keys.
+- **AI Assistant**: Integrated Google Gemini AI to generate professional search prompts from your scenario descriptions.
+- **Batch Download**: Download multiple videos at once with progress tracking.
+- **Modern UI**: Sleek, dark-themed interface for a professional experience.
+- **Easy Configuration**: Simple settings panel to manage your API keys.
 
 ## Installation
 
